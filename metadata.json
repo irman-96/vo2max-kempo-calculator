@@ -1,0 +1,5 @@
+{
+  "name": "VO₂max Kempo Calculator",
+  "description": "A Progressive Web App (PWA) designed for Kempo coaches to calculate and track athlete's VO₂max and BMI. It provides AI-powered analysis and training recommendations.",
+  "requestFramePermissions": []
+}
