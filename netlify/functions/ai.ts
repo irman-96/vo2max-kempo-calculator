@@ -1,60 +1,48 @@
 import type { Handler } from '@netlify/functions'
 
 export const handler: Handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
+  const apiKey = process.env.GEMINI_API_KEY
+
+  if (!apiKey) {
     return {
-      statusCode: 405,
-      body: 'Method Not Allowed',
+      statusCode: 500,
+      body: JSON.stringify({
+        error: 'API_KEY environment variable not set',
+      }),
     }
   }
 
   try {
-    const { vo2max, bmi, age, gender } = JSON.parse(event.body || '{}')
+    const body = JSON.parse(event.body || '{}')
+    const prompt = body.prompt
 
-    if (!process.env.GEMINI_API_KEY) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'API key tidak tersedia' }),
-      }
-    }
-
-    const prompt = `
-Anda adalah pelatih kebugaran profesional.
-Data atlet:
-- VO₂max: ${vo2max}
-- BMI: ${bmi}
-- Usia: ${age}
-- Jenis kelamin: ${gender}
-
-Berikan analisis singkat dan rekomendasi latihan yang aman.
-Gunakan bahasa Indonesia.
-`
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
         }),
       }
     )
 
-    const data = await response.json()
+    const data = await res.json()
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        text:
-          data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-          'Rekomendasi tidak tersedia',
-      }),
+      body: JSON.stringify(data),
     }
-  } catch {
+  } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Gagal memproses AI' }),
+      body: JSON.stringify({ error: 'AI request failed' }),
     }
   }
 }
