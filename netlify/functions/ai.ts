@@ -4,20 +4,24 @@ export const handler: Handler = async (event) => {
   const apiKey = process.env.GEMINI_API_KEY
 
   if (!apiKey) {
-  return {
-    statusCode: 500,
-    body: JSON.stringify({
-      error: 'GEMINI_API_KEY TIDAK TERBACA DI FUNCTION',
-    }),
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'API_KEY environment variable not set' }),
+    }
   }
-}
 
   try {
-    const body = JSON.parse(event.body || '{}')
-    const prompt = body.prompt
+    const { prompt } = JSON.parse(event.body || '{}')
+
+    if (!prompt) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Prompt is required' }),
+      }
+    }
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -26,7 +30,10 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({
           contents: [
             {
-              parts: [{ text: prompt }],
+              role: 'user',
+              parts: [
+                { text: prompt }
+              ],
             },
           ],
         }),
@@ -39,7 +46,9 @@ export const handler: Handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify(data),
     }
+
   } catch (err) {
+    console.error(err)
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'AI request failed' }),
