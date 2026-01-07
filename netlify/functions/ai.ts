@@ -4,13 +4,13 @@ export const handler: Handler = async (event) => {
   const apiKey = process.env.GEMINI_API_KEY
 
   if (!apiKey) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: 'API_KEY environment variable not set',
-      }),
-    }
+  return {
+    statusCode: 500,
+    body: JSON.stringify({
+      error: 'GEMINI_API_KEY TIDAK TERBACA DI FUNCTION',
+    }),
   }
+}
 
   try {
     const body = JSON.parse(event.body || '{}')
